@@ -302,6 +302,18 @@ textarea.input.short{min-height:84px}
 .cmp-scan{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .cmp-scan .btn{min-height:40px;padding:6px 14px}
 .cmp-scan .hint{margin:0;flex:1 1 180px}
+/* currency picker */
+.cur-pick{position:relative}
+.pick-btn{text-align:left;cursor:pointer;color:var(--ink);font:inherit;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pick-btn::after{content:"\25BE";color:var(--muted)}
+.pick-pop{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:20;background:var(--surface);border:1px solid var(--ink);border-radius:10px;padding:8px;display:grid;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.pick-list{list-style:none;margin:0;padding:0;max-height:260px;overflow-y:auto;display:grid;gap:2px;-webkit-overflow-scrolling:touch}
+.pick-list li{padding:9px 10px;border-radius:8px;cursor:pointer;font-size:.95rem}
+.pick-list li.on,.pick-list li:hover{background:var(--line)}
+.pick-list li.sel{font-weight:600}
+.pick-list li.pick-h{cursor:default;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;padding:8px 10px 2px}
+.pick-list li.pick-h:hover{background:transparent}
+.pick-list li.none{cursor:default;color:var(--muted)}
 /* checklist */
 .ck-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
 .ck-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
@@ -566,8 +578,8 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       <input class="input mono" id="cur-amount" type="text" inputmode="decimal" value="1000" autocomplete="off">
     </div>
     <div class="row">
-      <div class="field"><label class="label" for="cur-from">From</label><select class="input" id="cur-from"></select></div>
-      <div class="field"><label class="label" for="cur-to">To</label><select class="input" id="cur-to"></select></div>
+      <div class="field cur-pick" id="pick-from"><span class="label" id="lbl-from">From</span><select hidden id="cur-from"></select><button type="button" class="input pick-btn" id="pick-from-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lbl-from pick-from-btn"></button><div class="pick-pop" hidden><input type="text" class="input" placeholder="Type a name or code, like peso" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search currencies"><ul class="pick-list" role="listbox"></ul></div></div>
+      <div class="field cur-pick" id="pick-to"><span class="label" id="lbl-to">To</span><select hidden id="cur-to"></select><button type="button" class="input pick-btn" id="pick-to-btn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="lbl-to pick-to-btn"></button><div class="pick-pop" hidden><input type="text" class="input" placeholder="Type a name or code, like peso" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Search currencies"><ul class="pick-list" role="listbox"></ul></div></div>
     </div>
     <div class="btns"><button type="button" class="btn" id="cur-swap">Swap currencies</button></div>
     <div class="results" aria-live="polite">
@@ -1067,8 +1079,31 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     ['EUR', 'Euro', 2], ['GBP', 'British pound', 2], ['PKR', 'Pakistani rupee', 2], ['BDT', 'Bangladeshi taka', 2], ['LKR', 'Sri Lankan rupee', 2], ['NPR', 'Nepalese rupee', 2],
     ['EGP', 'Egyptian pound', 2], ['CAD', 'Canadian dollar', 2], ['AUD', 'Australian dollar', 2], ['NZD', 'New Zealand dollar', 2], ['SGD', 'Singapore dollar', 2],
     ['MYR', 'Malaysian ringgit', 2], ['THB', 'Thai baht', 2], ['CNY', 'Chinese yuan', 2], ['JPY', 'Japanese yen', 0], ['KRW', 'South Korean won', 0],
-    ['TRY', 'Turkish lira', 2], ['ZAR', 'South African rand', 2], ['CHF', 'Swiss franc', 2]
+    ['TRY', 'Turkish lira', 2], ['ZAR', 'South African rand', 2], ['CHF', 'Swiss franc', 2],
+    ['HKD', 'Hong Kong dollar', 2], ['TWD', 'New Taiwan dollar', 2], ['VND', 'Vietnamese dong', 0], ['MAD', 'Moroccan dirham', 2], ['TND', 'Tunisian dinar', 3],
+    ['DZD', 'Algerian dinar', 2], ['LBP', 'Lebanese pound', 0], ['IQD', 'Iraqi dinar', 0], ['ILS', 'Israeli shekel', 2], ['AFN', 'Afghan afghani', 2],
+    ['MMK', 'Myanmar kyat', 0], ['KHR', 'Cambodian riel', 0], ['LAK', 'Lao kip', 0], ['BND', 'Brunei dollar', 2], ['MVR', 'Maldivian rufiyaa', 2],
+    ['KES', 'Kenyan shilling', 2], ['UGX', 'Ugandan shilling', 0], ['TZS', 'Tanzanian shilling', 0], ['ETB', 'Ethiopian birr', 2], ['NGN', 'Nigerian naira', 2],
+    ['GHS', 'Ghanaian cedi', 2], ['ZMW', 'Zambian kwacha', 2], ['MUR', 'Mauritian rupee', 2], ['RUB', 'Russian ruble', 2], ['UAH', 'Ukrainian hryvnia', 2],
+    ['PLN', 'Polish zloty', 2], ['CZK', 'Czech koruna', 2], ['HUF', 'Hungarian forint', 2], ['RON', 'Romanian leu', 2], ['BGN', 'Bulgarian lev', 2],
+    ['SEK', 'Swedish krona', 2], ['NOK', 'Norwegian krone', 2], ['DKK', 'Danish krone', 2], ['ISK', 'Icelandic krona', 0], ['MXN', 'Mexican peso', 2],
+    ['BRL', 'Brazilian real', 2], ['ARS', 'Argentine peso', 2], ['CLP', 'Chilean peso', 0], ['COP', 'Colombian peso', 2], ['PEN', 'Peruvian sol', 2],
+    ['KZT', 'Kazakhstani tenge', 2], ['UZS', 'Uzbekistani som', 2], ['GEL', 'Georgian lari', 2], ['AMD', 'Armenian dram', 2], ['AZN', 'Azerbaijani manat', 2],
+    ['SOS', 'Somali shilling', 2], ['LYD', 'Libyan dinar', 3], ['YER', 'Yemeni rial', 2]
   ];
+  // Extra words people might type when searching
+  var CUR_WORDS = {
+    AED: 'uae emirates dubai abu dhabi dirham', USD: 'america united states dollar', PHP: 'philippines filipino', IDR: 'indonesia', INR: 'india',
+    SAR: 'saudi arabia', QAR: 'qatar', KWD: 'kuwait', BHD: 'bahrain', OMR: 'oman', JOD: 'jordan', EUR: 'europe germany france italy spain',
+    GBP: 'uk britain england sterling', PKR: 'pakistan', BDT: 'bangladesh', LKR: 'sri lanka', NPR: 'nepal', EGP: 'egypt', CAD: 'canada', AUD: 'australia',
+    NZD: 'new zealand kiwi', SGD: 'singapore', MYR: 'malaysia', THB: 'thailand', CNY: 'china renminbi rmb', JPY: 'japan', KRW: 'korea', TRY: 'turkey turkiye',
+    ZAR: 'south africa', CHF: 'switzerland', HKD: 'hong kong', TWD: 'taiwan', VND: 'vietnam', MAD: 'morocco', TND: 'tunisia', DZD: 'algeria', LBP: 'lebanon',
+    IQD: 'iraq', ILS: 'israel', AFN: 'afghanistan', MMK: 'myanmar burma', KHR: 'cambodia', LAK: 'laos', BND: 'brunei', MVR: 'maldives', KES: 'kenya',
+    UGX: 'uganda', TZS: 'tanzania', ETB: 'ethiopia', NGN: 'nigeria', GHS: 'ghana', ZMW: 'zambia', MUR: 'mauritius', RUB: 'russia', UAH: 'ukraine',
+    PLN: 'poland', CZK: 'czech czechia', HUF: 'hungary', RON: 'romania', BGN: 'bulgaria', SEK: 'sweden', NOK: 'norway', DKK: 'denmark', ISK: 'iceland',
+    MXN: 'mexico', BRL: 'brazil', ARS: 'argentina', CLP: 'chile', COP: 'colombia', PEN: 'peru', KZT: 'kazakhstan', UZS: 'uzbekistan', GEL: 'georgia',
+    AMD: 'armenia', AZN: 'azerbaijan', SOS: 'somalia', LYD: 'libya', YER: 'yemen'
+  };
   // Built-in rates (per 1 USD), used until fresher ones arrive.
   var PER_USD = {
     AED: 3.6725, USD: 1, PHP: 63.000072, IDR: 17891.619611, INR: 96.883664,
@@ -1076,7 +1111,12 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     EUR: 0.892251, GBP: 0.756516, PKR: 277.018, BDT: 123.020115, LKR: 330.503569, NPR: 155.01308,
     EGP: 52.374069, CAD: 1.423081, AUD: 1.437873, NZD: 1.785496, SGD: 1.281021,
     MYR: 4.090984, THB: 33.66797, CNY: 6.715255, JPY: 158.033512, KRW: 1342.34042,
-    TRY: 49.278221, ZAR: 16.615355, CHF: 0.832501
+    TRY: 49.278221, ZAR: 16.615355, CHF: 0.832501,
+    HKD: 7.848189, TWD: 31.962657, VND: 25868.38327, MAD: 9.937326, TND: 2.989453, DZD: 134.430343, LBP: 89500, IQD: 1428.8947, ILS: 3.068082, AFN: 64.845433,
+    MMK: 2096.253165, KHR: 4049.268414, LAK: 22280.187774, BND: 1.281021, MVR: 15.428575, KES: 129.641415, UGX: 3981.202747, TZS: 2618.547243, ETB: 161.489731,
+    NGN: 1331.013867, GHS: 11.64572, ZMW: 19.750829, MUR: 47.376339, RUB: 85.432836, UAH: 44.850201, PLN: 3.908572, CZK: 21.786477, HUF: 326.669292,
+    RON: 4.779274, BGN: 1.745085, SEK: 9.988226, NOK: 9.567476, DKK: 6.680183, ISK: 122.36204, MXN: 18.100987, BRL: 5.018279, ARS: 1518.4363, CLP: 977.542882,
+    COP: 3236.417658, PEN: 3.43997, KZT: 448.40035, UZS: 11808.26792, GEL: 2.597637, AMD: 361.62717, AZN: 1.698681, SOS: 570.988522, LYD: 6.409907, YER: 235.945769
   };
   var BUILTIN_TS = Date.UTC(2026, 9, 9);
   var DEFAULT_PEG = 3.6725;
@@ -1134,7 +1174,66 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     });
     setRateInputs();
   }
+  function curName(code) { var r = ''; CUR.forEach(function (c) { if (c[0] === code) r = c[0] + ' \u2013 ' + c[1]; }); return r; }
+  var pickers = [];
+  function initPicker(key) {
+    var root = $('#pick-' + key), btn = $('#pick-' + key + '-btn'), pop = root.querySelector('.pick-pop'), q = pop.querySelector('input'), list = pop.querySelector('.pick-list'), sel = $('#cur-' + key);
+    var shown = [], active = 0;
+    function close() { pop.hidden = true; btn.setAttribute('aria-expanded', 'false'); }
+    function choose(code) { sel.value = code; close(); sel.dispatchEvent(new Event('change')); btn.focus(); }
+    function build() {
+      var t = q.value.trim().toLowerCase();
+      list.textContent = ''; shown = [];
+      function add(c) {
+        var li = document.createElement('li'); li.setAttribute('role', 'option'); li.textContent = c[0] + ' \u2013 ' + c[1];
+        if (c[0] === sel.value) { li.className = 'sel'; li.setAttribute('aria-selected', 'true'); }
+        li.addEventListener('mousedown', function (e) { e.preventDefault(); });
+        li.addEventListener('click', function () { choose(c[0]); });
+        list.appendChild(li); shown.push({ code: c[0], el: li });
+      }
+      function head(txt) { var h = document.createElement('li'); h.className = 'pick-h'; h.textContent = txt; h.setAttribute('role', 'presentation'); list.appendChild(h); }
+      var more = CUR.filter(function (c) { return !c[3]; }).sort(function (a, b) { return a[1] < b[1] ? -1 : 1; });
+      if (!t) {
+        head('Main currencies'); CUR.filter(function (c) { return c[3]; }).forEach(add);
+        head('More currencies'); more.forEach(add);
+      } else {
+        var hits = CUR.filter(function (c) {
+          var hay = (c[0] + ' ' + c[1] + ' ' + (CUR_WORDS[c[0]] || '')).toLowerCase();
+          return t.split(/\s+/).every(function (w) { return hay.indexOf(w) >= 0; });
+        });
+        hits.sort(function (a, b) {
+          function rank(c) { var cl = c[0].toLowerCase(), n = c[1].toLowerCase(); return (cl === t ? 0 : cl.indexOf(t) === 0 ? 1 : (' ' + (CUR_WORDS[c[0]] || '') + ' ').indexOf(' ' + t + ' ') >= 0 ? 1.5 : n.indexOf(t) === 0 ? 2 : 3) + (c[3] ? 0 : 0.5); }
+          return rank(a) - rank(b);
+        });
+        hits.forEach(add);
+        if (!hits.length) { var no = document.createElement('li'); no.className = 'none'; no.textContent = 'No match. Try the country or the currency name.'; list.appendChild(no); }
+      }
+      active = 0; mark();
+    }
+    function mark() {
+      shown.forEach(function (s, i) { s.el.classList.toggle('on', i === active); });
+      if (shown[active] && shown[active].el.scrollIntoView) shown[active].el.scrollIntoView({ block: 'nearest' });
+    }
+    function open() {
+      pickers.forEach(function (p) { if (p !== api) p.close(); });
+      q.value = ''; build(); pop.hidden = false; btn.setAttribute('aria-expanded', 'true');
+      q.focus();
+    }
+    btn.addEventListener('click', function () { if (pop.hidden) open(); else close(); });
+    q.addEventListener('input', build);
+    q.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown') { active = Math.min(shown.length - 1, active + 1); mark(); e.preventDefault(); }
+      else if (e.key === 'ArrowUp') { active = Math.max(0, active - 1); mark(); e.preventDefault(); }
+      else if (e.key === 'Enter') { if (shown[active]) choose(shown[active].code); e.preventDefault(); }
+      else if (e.key === 'Escape') { close(); btn.focus(); }
+    });
+    document.addEventListener('click', function (e) { if (!root.contains(e.target)) close(); });
+    var api = { close: close, refresh: function () { btn.textContent = curName(sel.value); } };
+    pickers.push(api);
+  }
+  function refreshPickers() { pickers.forEach(function (p) { p.refresh(); }); }
   function renderCurrency() {
+    refreshPickers();
     var amount = num($('#cur-amount').value);
     var from = $('#cur-from').value, to = $('#cur-to').value;
     $('#cur-out').textContent = money(convertCur(amount, from, to), to) + ' ' + to;
@@ -1197,6 +1296,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       if (j && j.result === 'success') applyRates(j.rates, (j.time_last_update_unix || 0) * 1000, 'Live rates');
     }).catch(function () {});
   }
+  initPicker('from'); initPicker('to');
   $('#cur-amount').addEventListener('input', renderCurrency);
   $('#cur-from').addEventListener('change', renderCurrency);
   $('#cur-to').addEventListener('change', renderCurrency);

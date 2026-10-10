@@ -22,7 +22,7 @@ jobs:
             updated: (.time_last_update_unix | strftime("%Y-%m-%d")),
             ts: (.time_last_update_unix * 1000),
             source: "open.er-api.com",
-            rates: (.rates | with_entries(select(.key as $k | ["AED","PHP","IDR","INR","SAR","QAR","KWD","BHD","OMR","JOD","EUR","GBP","PKR","BDT","LKR","NPR","EGP","CAD","AUD","NZD","SGD","MYR","THB","CNY","JPY","KRW","TRY","ZAR","CHF"] | index($k))))
+            rates: .rates
           }' raw.json > rates.json
           rm raw.json
       - name: Commit if changed
