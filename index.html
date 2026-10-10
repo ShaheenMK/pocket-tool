@@ -559,7 +559,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   <!-- Currency -->
   <section class="panel" id="panel-currency" role="tabpanel" aria-labelledby="tab-currency" hidden>
     <h2>Currency converter</h2>
-    <p class="lede">AED, USD, PHP, IDR and INR. The rates are typed in, not live, so you can match the rate your exchange house gives you.</p>
+    <p class="lede">AED, USD, PHP, IDR and INR are the main ones, with more in the lists. Rates update by themselves when you are online, and you can type your own to match your exchange house.</p>
     <div class="field">
       <label class="label" for="cur-amount">Amount</label>
       <input class="input mono" id="cur-amount" type="text" inputmode="decimal" value="1000" autocomplete="off">
@@ -573,6 +573,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
       <div class="res total"><span class="k">Result</span><span class="num" id="cur-out">0</span></div>
     </div>
     <p class="hint" id="cur-line"></p>
+    <p class="hint" id="cur-status"></p>
     <div class="split-sec">
       <h3 class="sec-h">Same amount in the others</h3>
       <div class="results" id="cur-all" aria-live="polite"></div>
@@ -593,8 +594,8 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
         <div class="field"><label class="label" for="cur-rate-IDR">IDR for 1 AED</label><input class="input mono" id="cur-rate-IDR" type="text" inputmode="decimal" autocomplete="off"></div>
         <div class="field"><label class="label" for="cur-rate-INR">INR for 1 AED</label><input class="input mono" id="cur-rate-INR" type="text" inputmode="decimal" autocomplete="off"></div>
       </div>
-      <p class="hint">PHP, IDR and INR follow the dollar rate above until you type your own.</p>
-      <div class="btns"><button type="button" class="btn" id="cur-reset">Reset to starting rates</button></div>
+      <p class="hint">PHP, IDR and INR follow the latest rates until you type your own. Rates from <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener">ExchangeRate-API</a>.</p>
+      <div class="btns"><button type="button" class="btn" id="cur-reset">Reset to latest rates</button></div>
     </div>
   </section>
 
@@ -1058,15 +1059,33 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   ['a', 'b', 'c', 'd', 'e', 'f', 'cost', 'price'].forEach(function (k) { $('#pc-' + k).addEventListener('input', renderPercent); });
 
   /* ---------- Currency ---------- */
-  var CUR = [['AED', 'UAE dirham', 2], ['USD', 'US dollar', 2], ['PHP', 'Philippine peso', 2], ['IDR', 'Indonesian rupiah', 0], ['INR', 'Indian rupee', 2]];
-  var PER_USD = { AED: 3.6725, USD: 1, PHP: 63.0001, IDR: 17891.62, INR: 96.8837 };
-  var RATES_ASOF = '9 October 2026';
+  // [code, name, decimals, main]
+  var CUR = [
+    ['AED', 'UAE dirham', 2, 1], ['USD', 'US dollar', 2, 1], ['PHP', 'Philippine peso', 2, 1], ['IDR', 'Indonesian rupiah', 0, 1], ['INR', 'Indian rupee', 2, 1],
+    ['SAR', 'Saudi riyal', 2], ['QAR', 'Qatari riyal', 2], ['KWD', 'Kuwaiti dinar', 3], ['BHD', 'Bahraini dinar', 3], ['OMR', 'Omani rial', 3], ['JOD', 'Jordanian dinar', 3],
+    ['EUR', 'Euro', 2], ['GBP', 'British pound', 2], ['PKR', 'Pakistani rupee', 2], ['BDT', 'Bangladeshi taka', 2], ['LKR', 'Sri Lankan rupee', 2], ['NPR', 'Nepalese rupee', 2],
+    ['EGP', 'Egyptian pound', 2], ['CAD', 'Canadian dollar', 2], ['AUD', 'Australian dollar', 2], ['NZD', 'New Zealand dollar', 2], ['SGD', 'Singapore dollar', 2],
+    ['MYR', 'Malaysian ringgit', 2], ['THB', 'Thai baht', 2], ['CNY', 'Chinese yuan', 2], ['JPY', 'Japanese yen', 0], ['KRW', 'South Korean won', 0],
+    ['TRY', 'Turkish lira', 2], ['ZAR', 'South African rand', 2], ['CHF', 'Swiss franc', 2]
+  ];
+  // Built-in rates (per 1 USD), used until fresher ones arrive.
+  var PER_USD = {
+    AED: 3.6725, USD: 1, PHP: 63.000072, IDR: 17891.619611, INR: 96.883664,
+    SAR: 3.75, QAR: 3.64, KWD: 0.310233, BHD: 0.376, OMR: 0.384497, JOD: 0.709,
+    EUR: 0.892251, GBP: 0.756516, PKR: 277.018, BDT: 123.020115, LKR: 330.503569, NPR: 155.01308,
+    EGP: 52.374069, CAD: 1.423081, AUD: 1.437873, NZD: 1.785496, SGD: 1.281021,
+    MYR: 4.090984, THB: 33.66797, CNY: 6.715255, JPY: 158.033512, KRW: 1342.34042,
+    TRY: 49.278221, ZAR: 16.615355, CHF: 0.832501
+  };
+  var BUILTIN_TS = Date.UTC(2026, 9, 9);
   var DEFAULT_PEG = 3.6725;
   var OTHERS = ['PHP', 'IDR', 'INR'];
+  var base = {}, baseTs = BUILTIN_TS, baseLabel = 'Built-in rates from 9 October 2026';
+  Object.keys(PER_USD).forEach(function (k) { base[k] = PER_USD[k]; });
   var peg = DEFAULT_PEG, edited = {}, rates = {};
   try {
     var savedRates = JSON.parse(localStorage.getItem('pb-rates'));
-    if (savedRates && savedRates.v === RATES_ASOF) {
+    if (savedRates) {
       if (savedRates.peg > 0) peg = savedRates.peg;
       if (savedRates.edited) {
         OTHERS.forEach(function (k) { if (savedRates.edited[k] > 0) edited[k] = savedRates.edited[k]; });
@@ -1074,9 +1093,12 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     }
   } catch (e) {}
   function recompute() {
-    rates.AED = 1;
-    rates.USD = 1 / peg;
-    OTHERS.forEach(function (k) { rates[k] = edited[k] !== undefined ? edited[k] : PER_USD[k] / peg; });
+    CUR.forEach(function (c) {
+      var k = c[0];
+      if (k === 'AED') rates[k] = 1;
+      else if (k === 'USD') rates[k] = 1 / peg;
+      else rates[k] = edited[k] !== undefined ? edited[k] : base[k] / peg;
+    });
   }
   recompute();
   function ratesEdited() { return peg !== DEFAULT_PEG || Object.keys(edited).length > 0; }
@@ -1084,7 +1106,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     var d = 2;
     CUR.forEach(function (c) { if (c[0] === code) d = c[2]; });
     var a = Math.abs(x);
-    if (a > 0 && a < 1) d = code === 'IDR' ? 2 : 4;
+    if (a > 0 && a < 1) d = d === 0 ? 2 : Math.max(d, 4);
     return x.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
   }
   function convertCur(amount, from, to) { return amount / rates[from] * rates[to]; }
@@ -1095,14 +1117,19 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   }
   function fillCurrency() {
     ['from', 'to'].forEach(function (k, i) {
-      var sel = $('#cur-' + k);
+      var sel = $('#cur-' + k), keep = sel.value;
       sel.textContent = '';
-      CUR.forEach(function (c) {
-        var o = document.createElement('option');
-        o.value = c[0]; o.textContent = c[0] + ' – ' + c[1];
-        sel.appendChild(o);
+      [['Main currencies', 1], ['More currencies', 0]].forEach(function (g) {
+        var og = document.createElement('optgroup'); og.label = g[0];
+        CUR.forEach(function (c) {
+          if ((c[3] ? 1 : 0) !== g[1]) return;
+          var o = document.createElement('option');
+          o.value = c[0]; o.textContent = c[0] + ' – ' + c[1];
+          og.appendChild(o);
+        });
+        sel.appendChild(og);
       });
-      sel.value = i === 0 ? 'AED' : 'PHP';
+      sel.value = keep || (i === 0 ? 'AED' : 'PHP');
     });
     setRateInputs();
   }
@@ -1114,19 +1141,20 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     var box = $('#cur-all');
     box.textContent = '';
     CUR.forEach(function (c) {
-      if (c[0] === from) return;
+      if (c[0] === from || !(c[3] || c[0] === to)) return;
       var row = document.createElement('div'); row.className = 'res';
       var k = document.createElement('span'); k.className = 'k'; k.textContent = c[0] + ' · ' + c[1];
       var n = document.createElement('span'); n.className = 'num'; n.textContent = money(convertCur(amount, from, c[0]), c[0]);
       row.appendChild(k); row.appendChild(n); box.appendChild(row);
     });
+    $('#cur-status').textContent = baseLabel + '.';
     $('#cur-note').textContent = ratesEdited()
-      ? 'Using the rates you set. They stay on this device.'
-      : 'Starting rates are indicative, from ' + RATES_ASOF + '. Exchange houses and banks use their own rates, so set yours below for exact amounts.';
+      ? 'You have set your own rate for some currencies. They stay on this device, and the rest follow the latest rates.'
+      : 'These are mid-market rates. Exchange houses and banks use their own, so set yours below for exact amounts.';
   }
   function saveRates() {
     try {
-      if (ratesEdited()) localStorage.setItem('pb-rates', JSON.stringify({ v: RATES_ASOF, peg: peg, edited: edited }));
+      if (ratesEdited()) localStorage.setItem('pb-rates', JSON.stringify({ peg: peg, edited: edited }));
       else localStorage.removeItem('pb-rates');
     } catch (e) {}
   }
@@ -1134,6 +1162,39 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
     peg = v; recompute(); saveRates();
     setRateInputs(null, fromTyping);
     renderCurrency();
+  }
+  // Newest source wins: built-in < saved daily file < live. A source older than the one in use is ignored.
+  function applyRates(r, ts, label) {
+    if (!r || !(ts >= baseTs)) return false;
+    var n = 0;
+    CUR.forEach(function (c) {
+      var k = c[0];
+      if (k !== 'AED' && k !== 'USD' && r[k] > 0 && isFinite(r[k])) { base[k] = +r[k]; n++; }
+    });
+    if (n < 5) return false;
+    baseTs = ts;
+    baseLabel = label + ' from ' + new Date(ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+    recompute(); setRateInputs(); renderCurrency();
+    return true;
+  }
+  function getJSON(url) {
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, 8000) : null;
+    return fetch(url, ctl ? { signal: ctl.signal, cache: 'no-cache' } : { cache: 'no-cache' }).then(function (r) {
+      if (timer) clearTimeout(timer);
+      if (!r.ok) throw new Error('http');
+      return r.json();
+    });
+  }
+  function loadRates() {
+    if (!window.fetch) return;
+    getJSON('rates.json').then(function (j) {
+      applyRates(j && j.rates, j && j.ts, 'Daily saved rates');
+    }).catch(function () {}).then(function () {
+      return getJSON('https://open.er-api.com/v6/latest/USD');
+    }).then(function (j) {
+      if (j && j.result === 'success') applyRates(j.rates, (j.time_last_update_unix || 0) * 1000, 'Live rates');
+    }).catch(function () {});
   }
   $('#cur-amount').addEventListener('input', renderCurrency);
   $('#cur-from').addEventListener('change', renderCurrency);
@@ -1817,7 +1878,7 @@ input[type="range"]{width:100%;accent-color:var(--ink);min-height:32px}
   $('#ck-clear-done').addEventListener('click', function () { ckItems = ckItems.filter(function (x) { return !x.d; }); ckSave(); ckRender(); });
   $('#ck-clear-all').addEventListener('click', function () { ckItems = []; ckSave(); ckRender(); });
 
-  renderVat(); renderSplit(); fillUnitSelects(); renderUnits(); initDates(); renderPercent(); fillCurrency(); renderCurrency(); renderQR(); initTime(); renderCalc(); cmpBuild(); ckRender(); renderPassword();
+  renderVat(); renderSplit(); fillUnitSelects(); renderUnits(); initDates(); renderPercent(); fillCurrency(); renderCurrency(); loadRates(); renderQR(); initTime(); renderCalc(); cmpBuild(); ckRender(); renderPassword();
   var saved = null;
   try { saved = localStorage.getItem('pb-tab'); } catch (e) {}
   show(names.indexOf(saved) >= 0 ? saved : names[0]);
